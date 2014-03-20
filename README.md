@@ -1,19 +1,22 @@
 # chef-dokku-simple cookbook
 
-I am a simple man. Dokku is simple software. It should have a simple
-cookbook.
+[Dokku](https://github.com/progrium/dokku) is simple software. It
+should have a simple cookbook.
 
-This cookbook just runs dokku's default bootstrap script, and installs
-your ssh keys for access to dokku. If you need more power, you should
-check out [chef-dokku](https://github.com/fgrehm/chef-dokku).
+This cookbook just runs dokku's default
+[bootstrap script](https://github.com/progrium/dokku/blob/master/bootstrap.sh),
+and installs your ssh keys for access to dokku. If you need more
+power, you should check out
+[chef-dokku](https://github.com/fgrehm/chef-dokku).
 
 ## Attributes
 
-- `[:dokku][:tag]`: git tag to install
-- `[:dokku][:root]`: home dir for dokku (default: `/home/dokku`)
-- `['dokku'][:ssh_users]`: array of usernames to lookup ssh keys in
-  data bag `users` (see below)
-- `[:dokku][:vhost]`: domain for virtual hosting
+Attribute | Description | Type | Default
+----------|-------------|------|--------
+`[:dokku][:tag]` | git tag to install | String | `v0.2.2`
+`[:dokku][:root]` | home dir for dokku | String | `/home/dokku`
+`[:dokku][:ssh_users]` | array of usernames to lookup ssh keys in data bag `users` (see below) | Array | []
+`[:dokku][:vhost]` | domain for virtual hosting | String | nil
 
 ## SSH keys
 
