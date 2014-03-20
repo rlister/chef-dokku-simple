@@ -1,4 +1,4 @@
-# chef-dokku-simple Cookbook
+# chef-dokku-simple cookbook
 
 I am a simple man. Dokku is simple software. It should have a simple
 cookbook.
