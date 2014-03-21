@@ -63,3 +63,9 @@ node[:dokku][:apps].each do |app, cfg|
   end
 
 end
+
+## initial git push works better if we restart docker first
+service 'docker' do
+  provider Chef::Provider::Service::Upstart
+  action :restart
+end
