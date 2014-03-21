@@ -46,3 +46,20 @@ if vhost
     action :create
   end
 end
+
+## setup env vars for listed apps
+node[:dokku][:apps].each do |app, cfg|
+
+  directory File.join(root, app) do
+    owner  'dokku'
+    group  'dokku'
+  end
+
+  template File.join(root, app, 'ENV') do
+    source 'ENV.erb'
+    owner  'dokku'
+    group  'dokku'
+    variables(:env => cfg[:env] || {})
+  end
+
+end

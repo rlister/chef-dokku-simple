@@ -17,6 +17,7 @@ Attribute | Description | Type | Default
 `[:dokku][:root]` | home dir for dokku | String | `/home/dokku`
 `[:dokku][:ssh_users]` | array of usernames to lookup ssh keys in data bag `users` (see below) | Array | []
 `[:dokku][:vhost]` | domain for virtual hosting | String | nil
+`[:dokku][:apps]` | hash of apps to configure with env vars | Hash | {}
 
 ## SSH keys
 
@@ -32,6 +33,11 @@ You will need to setup a wildcard domain pointing to your host (unless
 you want each app on a different port). Unless `dig +short $(hostname -f)`
 gives the correct answer, you need to configure with `[:dokku][:vhost]`.
 
+## Environment variables
+
+To pre-configure environment for an application, add to the `apps`
+attribute as shown below in Usage.
+
 ## Usage
 
 Just include `dokku-simple` in your node's `run_list`:
@@ -42,7 +48,12 @@ Just include `dokku-simple` in your node's `run_list`:
     "tag": "v0.2.2",
     "root": "/home/dokku",
     "ssh_users": [ "lindsey", "jeff" ],
-    "vhost": "dokku.me"
+    "vhost": "dokku.me",
+    "apps": {
+      "my_app": {
+        "env": { "TOKEN": "123" }
+      }
+    }
   },
 
   "run_list": [
