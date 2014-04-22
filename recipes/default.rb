@@ -20,7 +20,7 @@ version = File.join(root, 'VERSION')
 
 ## run default dokku install
 bash 'dokku-bootstrap' do
-  code "wget -qO- https://raw.github.com/progrium/dokku/v0.2.2/bootstrap.sh | sudo DOKKU_TAG=#{tag} DOKKU_ROOT=#{root} bash"
+  code "wget -qO- https://raw.github.com/progrium/dokku/#{tag}/bootstrap.sh | sudo DOKKU_TAG=#{tag} DOKKU_ROOT=#{root} bash"
   not_if do
     File.exists?(version) and (File.open(version).read.chomp == tag)
   end
