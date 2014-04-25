@@ -67,5 +67,6 @@ end
 ## initial git push works better if we restart docker first
 service 'docker' do
   provider Chef::Provider::Service::Upstart
-  action :restart
+  supports :status => true, :restart => true, :reload => true
+  action [ :enable, :start ]
 end
