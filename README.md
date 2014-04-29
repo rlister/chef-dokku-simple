@@ -18,6 +18,7 @@ Attribute | Description | Type | Default
 `[:dokku][:ssh_users]` | array of usernames to lookup ssh keys in data bag `users` (see below) | Array | []
 `[:dokku][:vhost]` | domain for virtual hosting | String | nil
 `[:dokku][:apps]` | hash of apps to configure with env vars | Hash | {}
+`[:dokku][:plugins]` | hash of plugin `name: repo url` to install | Hash | {}
 
 ## SSH keys
 
@@ -58,6 +59,26 @@ Just include `dokku-simple` in your node's `run_list`:
 
   "run_list": [
     "recipe[dokku-simple]"
+  ]
+}
+```
+
+## Plugins
+
+To install [dokku plugins](https://github.com/progrium/dokku/wiki/Plugins) use
+the `dokku-simple::plugins` recipe:
+
+```json
+{
+  "dokku": {
+    "plugins": {
+      "postgresql": "https://github.com/Kloadut/dokku-pg-plugin"
+    }
+  },
+
+  "run_list": [
+    "recipe[dokku-simple]",
+    "recipe[dokku-simple::plugins]"
   ]
 }
 ```
