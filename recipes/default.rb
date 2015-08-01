@@ -16,13 +16,15 @@ package 'software-properties-common'
 
 tag  = node[:dokku][:tag]
 root = node[:dokku][:root]
-version = File.join(root, 'VERSION')
+
+version_file = File.join(root, 'VERSION')
 
 ## run default dokku install
 bash 'dokku-bootstrap' do
   code "wget -qO- https://raw.github.com/progrium/dokku/#{tag}/bootstrap.sh | sudo DOKKU_TAG=#{tag} DOKKU_ROOT=#{root} bash"
   not_if do
-    File.exists?(version) and (File.open(version).read.chomp == tag)
+    version = File.exist?(version_file) && File.read(version_file)
+    version && version.strip.gsub(/^v/i, '') == tag.strip.gsub(/^v/i, '')
   end
 end
 
