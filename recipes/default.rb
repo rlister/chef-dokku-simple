@@ -18,6 +18,7 @@ tag  = node[:dokku][:tag]
 root = node[:dokku][:root]
 
 version_file = File.join(root, 'VERSION')
+authed_file  = File.join(root, ".ssh", "authorized_keys")
 
 ## run default dokku install
 bash 'dokku-bootstrap' do
@@ -28,18 +29,25 @@ bash 'dokku-bootstrap' do
   end
 end
 
-## loop through users adding all their keys from data_bag users
+## loop through users adding all their keys from data_bag users if needed
 node[:dokku][:ssh_users].each do |user|
   keys = data_bag_item('users', user).fetch('ssh_keys', [])
   Array(keys).each_with_index do |key, index|
     bash 'sshcommand-acl-add' do
       cwd root
       code "echo '#{key}' | sshcommand acl-add dokku #{user}-#{index}"
+      not_if do
+        authed_keys  = File.exist?(authed_file) && File.read(authed_file)
+        escaped_name = Regexp.escape("#{user}-#{index}")
+        escaped_key  = Regexp.escape(key)
+
+        authed_keys && authed_keys =~ /^.+#{escaped_name}.+#{escaped_key}.*$/
+      end
     end
   end
 end
 
-## setup domain, you need this unless host can resolve dig +short $(hostname -f) 
+## setup domain, you need this unless host can resolve dig +short $(hostname -f)
 vhost = node[:dokku][:vhost]
 if vhost
   file File.join(root, 'VHOST') do
