@@ -82,3 +82,29 @@ the `dokku-simple::plugins` recipe:
   ]
 }
 ```
+
+You can specify what revision (branch/tag/ref) of a plugin to check out by
+appending a hash (`#`) followed by the revision at the end of the URL. For
+example to specifically use the `v1.0.1` tag of the redis plugin:
+
+```json
+{
+  "dokku": {
+    "plugins": {
+      "redis": "https://github.com/sekjun9878/dokku-redis-plugin#v1.0.1"
+    }
+  }
+}
+```
+
+To remove a plugin, simply set it's URL to `remove`:
+
+```json
+{
+  "dokku": {
+    "plugins": {
+      "redis": "remove"
+    }
+  }
+}
+```
