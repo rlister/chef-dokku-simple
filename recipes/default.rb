@@ -14,18 +14,49 @@ package 'wget'
 package 'python-software-properties'
 package 'software-properties-common'
 
-tag  = node[:dokku][:tag]
-root = node[:dokku][:root]
+tag   = node[:dokku][:tag]
+root  = node[:dokku][:root]
+vhost = node[:dokku][:vhost]
 
 version_file = File.join(root, 'VERSION')
 authed_file  = File.join(root, ".ssh", "authorized_keys")
 
-## run default dokku install
-bash 'dokku-bootstrap' do
-  code "wget -qO- https://raw.github.com/progrium/dokku/#{tag}/bootstrap.sh | sudo DOKKU_TAG=#{tag} DOKKU_ROOT=#{root} bash"
-  not_if do
-    version = File.exist?(version_file) && File.read(version_file)
-    version && version.strip.gsub(/^v/i, '') == tag.strip.gsub(/^v/i, '')
+version = File.exist?(version_file) && File.read(version_file)
+
+# If dokku is not installed, or another version than the one specified is
+# installed, run Dokku's boostrap.sh to ensure specified version is installed.
+if !version || version.strip.gsub(/^v/i, '') != tag.strip.gsub(/^v/i, '')
+  # A SSH key is required as part of the installation process, so we grab the
+  # first key from the first specified user. Any remaining keys are also added
+  # once installation is complete.
+  user      = node[:dokku][:ssh_users].first
+  ssh_key   = data_bag_item('users', user).fetch('ssh_keys', []).first
+  key_file  = File.join(Chef::Config[:file_cache_path], "dokku_ssh_key.pub")
+  conf_file = File.join(Chef::Config[:file_cache_path], "dokku_debconf")
+
+  file key_file do
+    content ssh_key
+    action :create
+  end
+
+  file conf_file do
+    content \
+      "dokku dokku/web_config boolean false\n" +
+      "dokku dokku/vhost_enable boolean true\n" +
+      "dokku dokku/hostname string #{vhost}\n" +
+      "dokku dokku/key_file string #{key_file}\n"
+  end
+
+  bash "dokku debconf-set-selections" do
+    code "cat \"#{conf_file}\" | debconf-set-selections"
+  end
+
+  log "about to install dokku, can take upto 15 minutes or more."
+
+  # Run the dokku bootstrap script
+  bash "dokku-bootstrap" do
+    code "wget -qO- https://raw.github.com/progrium/dokku/#{tag}/bootstrap.sh " +
+      "| sudo DOKKU_TAG=#{tag} DOKKU_ROOT=\"#{root}\" bash"
   end
 end
 
@@ -48,7 +79,6 @@ node[:dokku][:ssh_users].each do |user|
 end
 
 ## setup domain, you need this unless host can resolve dig +short $(hostname -f)
-vhost = node[:dokku][:vhost]
 if vhost
   file File.join(root, 'VHOST') do
     owner 'dokku'
@@ -59,7 +89,6 @@ end
 
 ## setup env vars for listed apps
 node[:dokku][:apps].each do |app, cfg|
-
   directory File.join(root, app) do
     owner  'dokku'
     group  'dokku'
@@ -71,7 +100,6 @@ node[:dokku][:apps].each do |app, cfg|
     group  'dokku'
     variables(:env => cfg[:env] || {})
   end
-
 end
 
 ## initial git push works better if we restart docker first
