@@ -26,34 +26,33 @@ version = File.exist?(version_file) && File.read(version_file)
 # If dokku is not installed, or another version than the one specified is
 # installed, run Dokku's boostrap.sh to ensure specified version is installed.
 if !version || version.strip.gsub(/^v/i, '') != tag.strip.gsub(/^v/i, '')
-  # A SSH key is required as part of the installation process, so we grab the
-  # first key from the first specified user. Any remaining keys are also added
-  # once installation is complete.
-  user      = node[:dokku][:ssh_users].first
-  ssh_key   = data_bag_item('users', user).fetch('ssh_keys', []).first
-  key_file  = File.join(Chef::Config[:file_cache_path], "dokku_ssh_key.pub")
-  conf_file = File.join(Chef::Config[:file_cache_path], "dokku_debconf")
+  if !version
+    # A SSH key is required as part of the initial installation process, so we
+    # grab the first key from the first specified user. Any remaining keys are
+    # also added once installation is complete.
+    user      = node[:dokku][:ssh_users].first
+    ssh_key   = data_bag_item('users', user).fetch('ssh_keys', []).first
+    key_file  = File.join(Chef::Config[:file_cache_path], "dokku_ssh_key.pub")
+    file key_file do
+      content ssh_key
+      action :create
+    end
 
-  file key_file do
-    content ssh_key
-    action :create
+    bash "dokku debconf-set-selections" do
+      code \
+        "echo \"dokku dokku/web_config boolean false\" " +
+          "| debconf-set-selections && " +
+        "echo \"dokku dokku/vhost_enable boolean true\" " +
+          "| debconf-set-selections && " +
+        "echo \"dokku dokku/hostname string #{vhost}\" " +
+          "| debconf-set-selections && " +
+        "echo \"dokku dokku/key_file string #{key_file}\" " +
+          "| debconf-set-selections"
+    end
+
+    log "about to install dokku, this can take upto 15 minutes or more."
   end
 
-  file conf_file do
-    content \
-      "dokku dokku/web_config boolean false\n" +
-      "dokku dokku/vhost_enable boolean true\n" +
-      "dokku dokku/hostname string #{vhost}\n" +
-      "dokku dokku/key_file string #{key_file}\n"
-  end
-
-  bash "dokku debconf-set-selections" do
-    code "cat \"#{conf_file}\" | debconf-set-selections"
-  end
-
-  log "about to install dokku, can take upto 15 minutes or more."
-
-  # Run the dokku bootstrap script
   bash "dokku-bootstrap" do
     code "wget -qO- https://raw.github.com/progrium/dokku/#{tag}/bootstrap.sh " +
       "| sudo DOKKU_TAG=#{tag} DOKKU_ROOT=\"#{root}\" bash"
