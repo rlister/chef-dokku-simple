@@ -5,6 +5,8 @@ version      = File.exist?(version_file) && File.read(version_file)
 if !version || version.strip.gsub(/^v/i, '') != tag.strip.gsub(/^v/i, '')
   # Due to an issue with Dokku's installation process, we currently need to
   # disable 3rd-party plugins to avoid any potential issues.
+  include_recipe "dokku-simple::disable_plugins"
   include_recipe "dokku-simple::debconf"
   include_recipe "dokku-simple::bootstrap"
+  include_recipe "dokku-simple::enable_plugins"
 end
