@@ -7,72 +7,10 @@
 # All rights reserved - Do Not Redistribute
 #
 
-## to get the bootstrap script
-package 'wget'
-
-## make sure we have apt-add-repository
-package 'python-software-properties'
-package 'software-properties-common'
-
-tag  = node[:dokku][:tag]
-root = node[:dokku][:root]
-
-version_file = File.join(root, 'VERSION')
-authed_file  = File.join(root, ".ssh", "authorized_keys")
-
-## run default dokku install
-bash 'dokku-bootstrap' do
-  code "wget -qO- https://raw.github.com/progrium/dokku/#{tag}/bootstrap.sh | sudo DOKKU_TAG=#{tag} DOKKU_ROOT=#{root} bash"
-  not_if do
-    version = File.exist?(version_file) && File.read(version_file)
-    version && version.strip.gsub(/^v/i, '') == tag.strip.gsub(/^v/i, '')
-  end
-end
-
-## loop through users adding all their keys from data_bag users if needed
-node[:dokku][:ssh_users].each do |user|
-  keys = data_bag_item('users', user).fetch('ssh_keys', [])
-  Array(keys).each_with_index do |key, index|
-    bash 'sshcommand-acl-add' do
-      cwd root
-      code "echo '#{key}' | sshcommand acl-add dokku #{user}-#{index}"
-      not_if do
-        authed_keys  = File.exist?(authed_file) && File.read(authed_file)
-        escaped_name = Regexp.escape("#{user}-#{index}")
-        escaped_key  = Regexp.escape(key)
-
-        authed_keys && authed_keys =~ /^.+#{escaped_name}.+#{escaped_key}.*$/
-      end
-    end
-  end
-end
-
-## setup domain, you need this unless host can resolve dig +short $(hostname -f)
-vhost = node[:dokku][:vhost]
-if vhost
-  file File.join(root, 'VHOST') do
-    owner 'dokku'
-    content vhost
-    action :create
-  end
-end
-
-## setup env vars for listed apps
-node[:dokku][:apps].each do |app, cfg|
-
-  directory File.join(root, app) do
-    owner  'dokku'
-    group  'dokku'
-  end
-
-  template File.join(root, app, 'ENV') do
-    source 'ENV.erb'
-    owner  'dokku'
-    group  'dokku'
-    variables(:env => cfg[:env] || {})
-  end
-
-end
+include_recipe "dokku-simple::install"
+include_recipe "dokku-simple::ssh_users"
+include_recipe "dokku-simple::vhost"
+include_recipe "dokku-simple::app_envs"
 
 ## initial git push works better if we restart docker first
 service 'docker' do
