@@ -9,11 +9,14 @@ and installs your ssh keys for access to dokku. If you need more
 power, you should check out
 [chef-dokku](https://github.com/fgrehm/chef-dokku).
 
+Tested with Dokku v0.3.22 and later. Older versions may work, but are untested,
+so try at your own risk.
+
 ## Attributes
 
 Attribute | Description | Type | Default
 ----------|-------------|------|--------
-`[:dokku][:tag]` | git tag to install | String | `v0.2.2`
+`[:dokku][:tag]` | git tag to install | String | `v0.3.26`
 `[:dokku][:root]` | home dir for dokku | String | `/home/dokku`
 `[:dokku][:ssh_users]` | array of usernames to lookup ssh keys in data bag `users` (see below) | Array | []
 `[:dokku][:vhost]` | domain for virtual hosting | String | nil
@@ -46,7 +49,7 @@ Just include `dokku-simple` in your node's `run_list`:
 ```json
 {
   "dokku": {
-    "tag": "v0.2.2",
+    "tag": "v0.3.26",
     "root": "/home/dokku",
     "ssh_users": [ "lindsey", "jeff" ],
     "vhost": "dokku.me",
