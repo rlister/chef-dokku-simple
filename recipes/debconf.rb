@@ -2,7 +2,7 @@
 # grab the first key from the first specified user. Any remaining keys are
 # also added once installation is complete.
 first_user = node[:dokku][:ssh_users].first
-ssh_key    = data_bag_item('users', first_user).fetch('ssh_keys', []).first
+ssh_key    = Array(data_bag_item('users', first_user).fetch('ssh_keys', [])).first
 key_file   = File.join(Chef::Config[:file_cache_path], "dokku_ssh_key.pub")
 
 file key_file do
